@@ -180,11 +180,11 @@ class IRC(object):
 
 	def run(self):
 		if os.path.isfile('bank.pkl'):
-			with open('bank.pkl', 'rb') as bank_file:
+			with open('bank.pkl') as bank_file:
 				self.bank = pickle.load(bank_file)
 		if os.path.isfile('db.pkl'):
-			with open('db.pkl', 'rb') as db_file:
-				self.bank = pickle.load(db_file)
+			with open('db.pkl',) as db_file:
+				self.db = pickle.load(db_file)
 		threading.Thread(target=self.loop_backup).start()
 		threading.Thread(target=self.loop_maintenance).start()
 		threading.Thread(target=self.loop_verify).start()
@@ -375,7 +375,6 @@ class IRC(object):
 								for user in richest:
 									self.sendmsg(chan, '[{0}] {1} {2}'.format(self.color(count, pink), user, self.color('(${:,})'.format(self.bank[user]), grey)))
 									count += 1
-									time.sleep(throttle_msg)
 							else:
 								self.error(chan, 'Yall broke...')
 						elif msg == '!top':
@@ -383,7 +382,6 @@ class IRC(object):
 							self.sendmsg(chan, self.color('  Symbol       Value           1H          24H           7D         24H Volume        Market Cap    ', black, light_grey))
 							for item in data:
 								self.sendmsg(chan, self.coin_info(item, True))
-								time.sleep(throttle_msg)
 						elif msg == '!wallet':
 							if not self.maintenance:
 								if nick in self.db:
@@ -397,7 +395,6 @@ class IRC(object):
 											value = float([item for item in CMC.get() if symbol == item['symbol']][0]['price_usd'])*amount
 										self.sendmsg(chan, ' {0} | {1} | {2} '.format(symbol.ljust(8), condense_float(amount).rjust(20), condense_value(value).rjust(20)))
 										total += float(value)
-										time.sleep(throttle_msg)
 									self.sendmsg(chan, self.color('                            ' + ('Total: ' + condense_value(total)).rjust(27), black, light_grey))
 								elif nick in self.verifying:
 									self.sendmsg(chan, 'Your account is not verified yet!')
@@ -679,9 +676,9 @@ class IRC(object):
 		self.event_disconnect()
 
 	def loop_backup(self):
+		time.sleep(21600) # 6H
 		while True:
 			try:
-				time.sleep(21600) # 6H
 				with open('bank.pkl', 'wb') as bank_file:
 					pickle.dump(self.bank, bank_file, pickle.HIGHEST_PROTOCOL)
 				with open('db.pkl', 'wb') as db_file:
@@ -689,6 +686,8 @@ class IRC(object):
 				self.sendmsg(channel, self.color('Database backed up!', green))
 			except Exception as ex:
 				error('Error occured in the backup loop!', ex)
+			finally:
+				time.sleep(21600) # 6H
 
 	def loop_maintenance(self):
 		while True:
@@ -702,7 +701,6 @@ class IRC(object):
 			except Exception as ex:
 				self.maintenance = False
 				error('Error occured in the maintenance loop!', ex)
-				time.sleep(900)
 
 	def loop_verify(self):
 		while True:
@@ -712,7 +710,6 @@ class IRC(object):
 					self.db[nick] = {'USD':init_funds}
 					del self.verifying[nick]
 					self.sendmsg(nick, f'Your account is now verified! Here is {condense_value(init_funds)} to start trading!')
-					time.sleep(throttle_msg)
 			except Exception as ex:
 				error('Error occured in the verify loop!', ex)
 			finally:
