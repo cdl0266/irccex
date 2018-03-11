@@ -1,6 +1,8 @@
 # irccex
 A fantasy cryptocurrency trading channel bot for the Internet Relay Chat (IRC) protocol.
 
+*"You can pretend trade currencies, instead of trade pretend currencies!"*
+
 ###### Requirments
  - [Python](https://www.python.org/downloads/) *(**Note:** This script was developed to be used with the latest version of Python.)*
  - [PySocks](https://pypi.python.org/pypi/PySocks) *(**Optional:** For using the `proxy` setting.)*
